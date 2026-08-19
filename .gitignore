@@ -1,0 +1,4 @@
+node_modules/
+sidediff-out/
+*.log
+.DS_Store

@@ -1,0 +1,19 @@
+{
+  "name": "sidediff",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "bin": { "sidediff": "./src/cli.ts" },
+  "scripts": {
+    "compare": "bun run src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "odiff-bin": "^4.5.0",
+    "playwright": "^1.50.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.0"
+  }
+}
