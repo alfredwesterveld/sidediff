@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { capture, makeContext } from "./capture.ts";
 import { diffPair } from "./diff.ts";
+import { diffText } from "./text.ts";
 import { writeReport } from "./report.ts";
 import type { Config, PageResult } from "./types.ts";
 
@@ -71,8 +72,10 @@ export async function run(cfg: Config, onProgress: (done: number, total: number)
             }
           }
 
+          const text = a.text && b.text ? diffText(a.text, b.text) : null;
+
           onProgress(++done, total);
-          return { path, viewport: viewport.name, a, b, diff } satisfies PageResult;
+          return { path, viewport: viewport.name, a, b, diff, text } satisfies PageResult;
         });
 
         results.push(...viewportResults);

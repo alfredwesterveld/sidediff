@@ -1,4 +1,5 @@
 import type { Browser, BrowserContext, Page } from "playwright";
+import { extractText } from "./text.ts";
 import type { CaptureResult, Config, Viewport } from "./types.ts";
 
 /**
@@ -117,10 +118,15 @@ export async function capture(
     const redirected = pathOf(target) !== finalPath;
 
     if (status === null || status >= 400) {
-      return { ok: false, status, finalPath, redirected, screenshot: null, error: `HTTP ${status ?? "no response"}` };
+      return { ok: false, status, finalPath, redirected, screenshot: null, text: null, error: `HTTP ${status ?? "no response"}` };
     }
 
     await stabilise(page, cfg);
+
+    // Cheap while the page is already open, and immune to the height mismatches
+    // that make pixel percentages hard to read.
+    const text = cfg.collectText ? await extractText(page) : null;
+
     await page.screenshot({
       path: outFile,
       fullPage: true,
@@ -130,7 +136,7 @@ export async function capture(
       timeout: cfg.navTimeout,
     });
 
-    return { ok: true, status, finalPath, redirected, screenshot: outFile, error: null };
+    return { ok: true, status, finalPath, redirected, screenshot: outFile, text, error: null };
   } catch (err) {
     return {
       ok: false,
@@ -138,6 +144,7 @@ export async function capture(
       finalPath: null,
       redirected: false,
       screenshot: null,
+      text: null,
       error: err instanceof Error ? err.message : String(err),
     };
   } finally {

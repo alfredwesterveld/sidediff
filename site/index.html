@@ -63,11 +63,24 @@
   .pill { font-size:11.5px; padding:2px 9px; border-radius:99px; color:#fff; font-family:var(--mono); }
   .p-err { background:var(--bad); } .p-lay { background:var(--warn); }
   .p-dif { background:#8e44ad; } .p-mat { background:var(--good); } .p-skp { background:#666; }
+  .p-txt { background:#0b6b8f; }
   table { width:100%; border-collapse:collapse; font-size:13px; }
   th { text-align:left; font-weight:500; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; padding:8px 18px; border-bottom:1px solid var(--line); }
   td { padding:9px 18px; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:12.5px; }
   tr:last-child td { border-bottom:none; }
   .tag { font-size:10.5px; padding:1px 7px; border-radius:4px; color:#fff; }
+
+  .mtab { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .mtab th { padding:8px 18px; }
+  .mtab td { padding:8px 18px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .mtab td.k { color:var(--muted); }
+  .mtab .was { color:var(--bad); } .mtab .now { color:var(--good); }
+  .tdiff { font-family:var(--mono); font-size:12.5px; line-height:1.6; border-top:1px solid var(--line); }
+  .tdiff .h { padding:7px 18px; color:var(--muted); background:var(--bg); font-size:11.5px; }
+  .tdiff .l { padding:1px 18px; white-space:pre-wrap; }
+  .tdiff .add { background:rgba(45,122,53,0.14); border-left:3px solid var(--good); }
+  .tdiff .del { background:rgba(192,57,43,0.14); border-left:3px solid var(--bad); }
+  .tdiff .ctx { border-left:3px solid transparent; color:var(--muted); }
 
   .steps { counter-reset:s; display:grid; gap:2px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
   .steps > div { background:var(--panel); padding:20px 22px; display:flex; gap:16px; }
@@ -105,7 +118,8 @@
 
     <p class="lede">
       Point it at an old site and its replacement. It finds the paths itself, screenshots both
-      sides, and hands you one report showing exactly what moved, broke, or disappeared.
+      sides, diffs the text as well as the pixels, and hands you one report showing exactly
+      what moved, broke, or disappeared.
     </p>
 
     <p class="not">
@@ -133,23 +147,62 @@
         <span class="pill p-err">errors 2</span>
         <span class="pill p-lay">size mismatch 7</span>
         <span class="pill p-dif">changed 24</span>
+        <span class="pill p-txt">text only 9</span>
         <span class="pill p-skp">skipped 1</span>
         <span class="pill p-mat">identical 166</span>
       </div>
       <table>
-        <thead><tr><th>status</th><th>path</th><th>viewport</th><th>diff %</th><th>http a/b</th><th>notes</th></tr></thead>
+        <thead><tr><th>status</th><th>path</th><th>viewport</th><th>diff %</th><th>text ±</th><th>http a/b</th><th>notes</th></tr></thead>
         <tbody>
-          <tr><td><span class="tag p-err">error</span></td><td>/careers</td><td>desktop</td><td></td><td>200 / 404</td><td>missing on B</td></tr>
-          <tr><td><span class="tag p-lay">layout</span></td><td>/pricing</td><td>desktop</td><td>18.40%</td><td>200 / 200</td><td>page is 420px taller</td></tr>
-          <tr><td><span class="tag p-dif">diff</span></td><td>/</td><td>mobile</td><td>6.12%</td><td>200 / 200</td><td></td></tr>
-          <tr><td><span class="tag p-dif">diff</span></td><td>/about</td><td>desktop</td><td>1.03%</td><td>200 / 301</td><td>redirect: /about-us</td></tr>
-          <tr><td><span class="tag p-mat">match</span></td><td>/contact</td><td>desktop</td><td></td><td>200 / 200</td><td></td></tr>
+          <tr><td><span class="tag p-err">error</span></td><td>/careers</td><td>desktop</td><td></td><td></td><td>200 / 404</td><td>missing on B</td></tr>
+          <tr><td><span class="tag p-lay">layout</span></td><td>/pricing</td><td>desktop</td><td>18.40%</td><td>12 · meta 2</td><td>200 / 200</td><td>page is 420px taller</td></tr>
+          <tr><td><span class="tag p-dif">diff</span></td><td>/</td><td>mobile</td><td>6.12%</td><td>4</td><td>200 / 200</td><td></td></tr>
+          <tr><td><span class="tag p-dif">diff</span></td><td>/about</td><td>desktop</td><td>1.03%</td><td></td><td>200 / 301</td><td>redirect: /about-us</td></tr>
+          <tr><td><span class="tag p-txt">text</span></td><td>/terms</td><td>desktop</td><td></td><td>9 · meta 1</td><td>200 / 200</td><td>copy changed, pixels didn't</td></tr>
+          <tr><td><span class="tag p-mat">match</span></td><td>/contact</td><td>desktop</td><td></td><td></td><td>200 / 200</td><td></td></tr>
         </tbody>
       </table>
     </div>
     <p class="muted" style="margin-top:16px; font-size:14.5px">
-      Rows sort worst-first. Click any one for a slider, side-by-side, or the raw pixel diff.
+      Rows sort worst-first. Click any one for a slider, side-by-side, the raw pixel diff, or the text diff.
       Redirect targets are recorded per side — redirect parity is half the value of a migration audit.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Text diffs too, not just pixels</h2>
+    <p class="muted" style="max-width:60ch; font-size:15.5px">
+      Every page's rendered text is diffed GitHub-style, alongside a table of title, description,
+      canonical, <code>og:*</code>, and the heading and link inventories. This is the check that
+      catches a nav item or a whole section quietly missing on the new site — the thing pixel
+      percentages are worst at.
+    </p>
+    <div class="mock" style="margin-top:20px">
+      <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="url">/pricing · desktop · text</span></div>
+      <table class="mtab">
+        <thead><tr><th>tag</th><th>A</th><th>B</th></tr></thead>
+        <tbody>
+          <tr><td class="k">title</td><td class="was">Pricing — Old Co</td><td class="now">Plans — New Co</td></tr>
+          <tr><td class="k">canonical</td><td class="was"><em>empty</em></td><td class="now">https://new.example/plans</td></tr>
+          <tr><td class="k">links</td><td colspan="2"><div class="was">- Enterprise → /enterprise</div><div class="now">+ Teams → /teams</div></td></tr>
+        </tbody>
+      </table>
+      <div class="tdiff">
+        <div class="h">@@ hunk 1 @@</div>
+        <div class="l ctx">&nbsp; Simple pricing</div>
+        <div class="l del">- Starts at $10 per month</div>
+        <div class="l add">+ Starts at $12 per month</div>
+        <div class="l ctx">&nbsp; Cancel any time</div>
+        <div class="l del">- Enterprise plans available</div>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:16px; font-size:14.5px">
+      Rendered text, not markup — class hashes and build ids churn every deploy, so a raw HTML
+      diff reports everything as changed on a visually identical page. It is also immune to the
+      height mismatches that make pixel percentages hard to read.
     </p>
   </div>
 </section>
@@ -187,7 +240,7 @@ bun run compare <span class="f">--a</span> https://old.example <span class="f">-
       </div></div>
       <div><span class="n"></span><div>
         <h3>Diffs, then tells the truth about it</h3>
-        <p>Size mismatches are labelled separately from pixel changes, and a page counts as unchanged only if it clears both a percentage and an absolute pixel floor.</p>
+        <p>Size mismatches are labelled separately from pixel changes, text-only changes get their own bucket, and a page counts as unchanged only if it clears both a percentage and an absolute pixel floor.</p>
       </div></div>
     </div>
   </div>
@@ -226,6 +279,7 @@ bun run compare <span class="f">--a</span> https://old.example <span class="f">-
       <dt>--hide / --mask</dt><dd>Selectors to remove, or paint over, before diffing. For carousels, chat widgets, anything you know will never match.</dd>
       <dt>--tolerance</dt><dd>Diff percentage below which a page counts as unchanged. Pairs with the built-in absolute pixel floor.</dd>
       <dt>--limit / --per-template</dt><dd>Volume caps. Coverage is handled by template collapse, not by these.</dd>
+      <dt>--no-text</dt><dd>Skip the rendered-text and meta-tag diff and compare pixels only.</dd>
       <dt>--freeze-time</dt><dd>Pins the clock so client-rendered timestamps stop diffing. <code>none</code> disables.</dd>
     </dl>
     <p class="muted" style="margin-top:16px; font-size:14.5px"><code>bun run compare --help</code> for the rest.</p>

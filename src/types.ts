@@ -17,6 +17,7 @@ export interface Config {
   settleMs: number;
   headless: boolean;
   hideFixed: boolean;
+  collectText: boolean;
   freezeTime: string | null;
 }
 
@@ -27,6 +28,35 @@ export interface Viewport {
 }
 
 /** Result of loading one URL on one side, before any diffing. */
+export interface PageText {
+  lines: string[];
+  meta: Record<string, string>;
+  headings: string[];
+  links: string[];
+}
+
+/** A single non-body difference: a meta tag, or a heading/link inventory change. */
+export interface MetaChange {
+  key: string;
+  a: string;
+  b: string;
+  detail: string[];
+}
+
+export interface TextDiffOp {
+  type: "ctx" | "add" | "del";
+  text: string;
+}
+
+export interface TextDiff {
+  added: number;
+  removed: number;
+  changed: number;
+  metaChanged: number;
+  hunks: TextDiffOp[][];
+  meta: MetaChange[];
+}
+
 export interface CaptureResult {
   ok: boolean;
   status: number | null;
@@ -34,6 +64,7 @@ export interface CaptureResult {
   finalPath: string | null;
   redirected: boolean;
   screenshot: string | null;
+  text: PageText | null;
   error: string | null;
 }
 
@@ -49,6 +80,7 @@ export interface PageResult {
   a: CaptureResult;
   b: CaptureResult;
   diff: DiffOutcome;
+  text: TextDiff | null;
 }
 
 export interface Report {

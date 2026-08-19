@@ -46,10 +46,26 @@ client-rendered SPA yields nothing.
   lazy-loading, then back to the top
 - `--mask` paints over selectors you know will never match
 
+## Text and meta diffing
+
+Alongside the pixels, each page's **rendered text** (`innerText`, not markup) is diffed
+GitHub-style, plus a table of `<title>`, description, canonical, robots, `og:*`, and the
+heading and link inventories.
+
+Rendered text, not HTML, on purpose: class hashes, build ids and attribute order churn on
+every build, so a raw markup diff reports everything as changed on a visually identical page.
+Text diffing is also immune to the height mismatches that make pixel percentages hard to read,
+and it catches the migration failure pixels are worst at — a nav item or whole section quietly
+missing on the new site.
+
+It does not replace the pixel diff: a pure restyle with identical copy produces a clean text
+diff. That is why both live in one report. `--no-text` skips it.
+
 ## Reading the report
 
 Rows sort worst-first: `error` (one side failed) → `layout` (different image dimensions) →
-`diff` (% of pixels) → `skipped` → `match`. Redirect targets are recorded per side — redirect
+`diff` (% of pixels) → `text` → `skipped` → `match`. A `text` row is a page whose pixels
+matched but whose copy or meta tags changed — those must never be filed under `match`. Redirect targets are recorded per side — redirect
 parity is half the value of a migration audit.
 
 `layout` means the two screenshots have different dimensions. Read those first: odiff counts

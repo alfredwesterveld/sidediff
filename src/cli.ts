@@ -30,6 +30,7 @@ Capture
   --timeout <ms>        navigation timeout (default 30000)
   --hide-fixed          hide position:fixed elements (chat widgets, floating CTAs)
   --headed              run a visible browser (helps past bot protection)
+  --no-text             skip the rendered-text and meta-tag diff
 
 Diff
   --threshold <0-1>     per-pixel colour threshold (default 0.1)
@@ -152,6 +153,7 @@ async function main(): Promise<number> {
     settleMs: num(args, "settle", 400),
     headless: !args.has("headed"),
     hideFixed: args.has("hide-fixed"),
+    collectText: !args.has("no-text"),
     freezeTime: freezeRaw === "none" ? null : (freezeRaw ?? "2020-01-01T00:00:00Z"),
   };
 
