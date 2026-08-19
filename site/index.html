@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sidediff — see what changed between two live sites</title>
+<meta name="description" content="Compare two live websites across hundreds of URLs and get one report showing exactly what changed. Playwright for capture, odiff for pixels.">
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root {
+    --bg:#fbfbfa; --panel:#fff; --fg:#16161a; --muted:#6b6b76; --line:#e4e4e8;
+    --accent:#7b3fe4; --accent-soft:#f1ebfd; --warn:#c07a00; --bad:#c0392b; --good:#2d7a35;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0f0f12; --panel:#17171c; --fg:#ececed; --muted:#9a9aa4; --line:#2a2a32;
+      --accent:#a97bff; --accent-soft:#211a33; --warn:#e0a020; --bad:#e05c4a; --good:#4caf58;
+    }
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:1000px; margin:0 auto; padding:0 24px; }
+  code, .mono { font-family:var(--mono); font-size:0.9em; }
+
+  header { padding:80px 0 56px; }
+  .brand { display:flex; align-items:center; gap:10px; font-family:var(--mono); font-weight:600; letter-spacing:-0.02em; }
+  .brand svg { display:block; }
+  h1 { font-size:clamp(34px,5.2vw,54px); line-height:1.08; letter-spacing:-0.03em; margin:28px 0 0; max-width:16ch; }
+  h1 em { font-style:normal; color:var(--accent); }
+  .lede { font-size:clamp(17px,2.1vw,20px); color:var(--muted); max-width:56ch; margin:20px 0 0; }
+  .not { margin:26px 0 0; padding:12px 16px; border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 6px 6px 0; max-width:60ch; font-size:15px; }
+  .not strong { color:var(--accent); }
+
+  .cta { display:flex; flex-wrap:wrap; gap:10px; margin:32px 0 0; }
+  .cta a { text-decoration:none; font-size:14px; padding:10px 18px; border-radius:7px; border:1px solid var(--line); color:var(--fg); background:var(--panel); }
+  .cta a.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  section { padding:56px 0; border-top:1px solid var(--line); }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin:0 0 24px; font-weight:600; }
+  h3 { font-size:17px; margin:0 0 6px; letter-spacing:-0.01em; }
+  p { margin:0 0 14px; }
+  .muted { color:var(--muted); }
+
+  pre { background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:16px 18px; overflow-x:auto; font-family:var(--mono); font-size:13.5px; line-height:1.7; margin:0 0 16px; }
+  pre .c { color:var(--muted); }
+  pre .f { color:var(--accent); }
+
+  .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:2px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .grid div { background:var(--panel); padding:22px; }
+  .grid p { font-size:14.5px; color:var(--muted); margin:0; }
+
+  /* mock report */
+  .mock { border:1px solid var(--line); border-radius:11px; overflow:hidden; background:var(--panel); box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+  .mock .bar { display:flex; align-items:center; gap:7px; padding:11px 14px; border-bottom:1px solid var(--line); background:var(--bg); }
+  .dot { width:10px; height:10px; border-radius:99px; background:var(--line); }
+  .mock .url { font-family:var(--mono); font-size:11.5px; color:var(--muted); margin-left:8px; }
+  .pills { display:flex; flex-wrap:wrap; gap:6px; padding:16px 18px 12px; }
+  .pill { font-size:11.5px; padding:2px 9px; border-radius:99px; color:#fff; font-family:var(--mono); }
+  .p-err { background:var(--bad); } .p-lay { background:var(--warn); }
+  .p-dif { background:#8e44ad; } .p-mat { background:var(--good); } .p-skp { background:#666; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; font-weight:500; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; padding:8px 18px; border-bottom:1px solid var(--line); }
+  td { padding:9px 18px; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:12.5px; }
+  tr:last-child td { border-bottom:none; }
+  .tag { font-size:10.5px; padding:1px 7px; border-radius:4px; color:#fff; }
+
+  .steps { counter-reset:s; display:grid; gap:2px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .steps > div { background:var(--panel); padding:20px 22px; display:flex; gap:16px; }
+  .steps .n { counter-increment:s; font-family:var(--mono); font-size:12px; color:var(--accent); flex:none; padding-top:2px; }
+  .steps .n::before { content:"0" counter(s); }
+  .steps p { font-size:14.5px; color:var(--muted); margin:0; }
+
+  dl { display:grid; grid-template-columns:minmax(140px,auto) 1fr; gap:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; margin:0; }
+  dt { font-family:var(--mono); font-size:12.5px; padding:11px 18px; background:var(--panel); border-bottom:1px solid var(--line); color:var(--accent); }
+  dd { margin:0; padding:11px 18px; font-size:14px; background:var(--panel); border-bottom:1px solid var(--line); color:var(--muted); }
+  dl > :nth-last-child(-n+2) { border-bottom:none; }
+
+  footer { padding:44px 0 64px; color:var(--muted); font-size:13.5px; border-top:1px solid var(--line); }
+  footer a { color:var(--fg); }
+  @media (max-width:620px) { dl, .grid { grid-template-columns:1fr; } dt { border-bottom:none; padding-bottom:0; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <rect x="0.75" y="0.75" width="18.5" height="18.5" rx="4" stroke="currentColor" stroke-width="1.5"/>
+        <path d="M10 1v18" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="3.5" y="5" width="4" height="3" rx="1" fill="currentColor"/>
+        <rect x="3.5" y="10" width="4" height="5" rx="1" fill="currentColor"/>
+        <rect x="12.5" y="5" width="4" height="5" rx="1" fill="#7b3fe4"/>
+        <rect x="12.5" y="12" width="4" height="3" rx="1" fill="#7b3fe4"/>
+      </svg>
+      sidediff
+    </div>
+
+    <h1>See what changed between <em>two live sites</em>.</h1>
+
+    <p class="lede">
+      Point it at an old site and its replacement. It finds the paths itself, screenshots both
+      sides, and hands you one report showing exactly what moved, broke, or disappeared.
+    </p>
+
+    <p class="not">
+      <strong>Not</strong> baseline-vs-rerun visual regression. Both sides are live URLs — the shape
+      a migration or redesign audit actually has, and the shape the dormant tools in this space
+      stopped serving.
+    </p>
+
+    <div class="cta">
+      <a class="primary" href="https://github.com/alfredwesterveld/sidediff">Repository</a>
+      <a href="#start">Get started</a>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>The report</h2>
+    <div class="mock">
+      <div class="bar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="url">sidediff-out/index.html</span>
+      </div>
+      <div class="pills">
+        <span class="pill p-err">errors 2</span>
+        <span class="pill p-lay">size mismatch 7</span>
+        <span class="pill p-dif">changed 24</span>
+        <span class="pill p-skp">skipped 1</span>
+        <span class="pill p-mat">identical 166</span>
+      </div>
+      <table>
+        <thead><tr><th>status</th><th>path</th><th>viewport</th><th>diff %</th><th>http a/b</th><th>notes</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag p-err">error</span></td><td>/careers</td><td>desktop</td><td></td><td>200 / 404</td><td>missing on B</td></tr>
+          <tr><td><span class="tag p-lay">layout</span></td><td>/pricing</td><td>desktop</td><td>18.40%</td><td>200 / 200</td><td>page is 420px taller</td></tr>
+          <tr><td><span class="tag p-dif">diff</span></td><td>/</td><td>mobile</td><td>6.12%</td><td>200 / 200</td><td></td></tr>
+          <tr><td><span class="tag p-dif">diff</span></td><td>/about</td><td>desktop</td><td>1.03%</td><td>200 / 301</td><td>redirect: /about-us</td></tr>
+          <tr><td><span class="tag p-mat">match</span></td><td>/contact</td><td>desktop</td><td></td><td>200 / 200</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" style="margin-top:16px; font-size:14.5px">
+      Rows sort worst-first. Click any one for a slider, side-by-side, or the raw pixel diff.
+      Redirect targets are recorded per side — redirect parity is half the value of a migration audit.
+    </p>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2>Get started</h2>
+    <pre><span class="c"># clone, then</span>
+bun install
+bunx playwright install chromium
+
+bun run compare <span class="f">--a</span> https://old.example <span class="f">--b</span> https://new.example</pre>
+    <p class="muted" style="font-size:14.5px">
+      Report lands in <code>sidediff-out/index.html</code>. Exit code is 1 if anything changed or
+      failed to load, so it drops into CI as-is.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div><span class="n"></span><div>
+        <h3>Finds the paths</h3>
+        <p>Unions <code>sitemap.xml</code> (following sitemap indexes and <code>robots.txt</code>) with a link crawl, so a stale or partial sitemap doesn't decide your coverage.</p>
+      </div></div>
+      <div><span class="n"></span><div>
+        <h3>Collapses templates twice</h3>
+        <p>By shape, and by sibling count — a parent with many children at one depth is a listing, whatever its URLs look like. A flat limit fills breadth-first with near-identical doc pages and never samples the rest of the site.</p>
+      </div></div>
+      <div><span class="n"></span><div>
+        <h3>Pins everything that renders nondeterministically</h3>
+        <p>Animations off, sticky made static, <code>Date</code> and <code>Math.random</code> frozen, locale and timezone fixed, analytics blocked, consent banners hidden, fonts awaited, lazy content scrolled into existence.</p>
+      </div></div>
+      <div><span class="n"></span><div>
+        <h3>Diffs, then tells the truth about it</h3>
+        <p>Size mismatches are labelled separately from pixel changes, and a page counts as unchanged only if it clears both a percentage and an absolute pixel floor.</p>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Why those last two matter</h2>
+    <div class="grid">
+      <div>
+        <h3>Taller ≠ changed</h3>
+        <p>odiff counts the entire non-overlapping region as different. A page that is merely 400px longer would read as a huge diff, so those rows get their own bucket and tolerance never applies to them.</p>
+      </div>
+      <div>
+        <h3>Percentages lie on long pages</h3>
+        <p>On a 20 000px page, 0.05% is ~100k pixels — enough to swallow a swapped logo. A change must clear a percentage <em>and</em> ~20k pixels to count as unchanged.</p>
+      </div>
+      <div>
+        <h3>Fixed elements stay visible</h3>
+        <p>Modern Chromium renders them once in a full-page shot. Fixed navs and CTAs are exactly what a redesign changes, so hiding them by default would blind the diff. <code>--hide-fixed</code> opts out.</p>
+      </div>
+      <div>
+        <h3>One-sided paths are a finding</h3>
+        <p>A URL that 200s on A and 404s on B is reported, not silently dropped into a garbage comparison. Same for redirects that only happen on one side.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Flags worth knowing</h2>
+    <dl>
+      <dt>--paths-file</dt><dd>Skip discovery entirely and supply the list yourself. The crawler reads server-rendered HTML only, so SPAs and bot-protected sites want this.</dd>
+      <dt>--viewports</dt><dd>Any set of <code>name:WIDTHxHEIGHT</code>. Defaults to desktop and mobile.</dd>
+      <dt>--hide / --mask</dt><dd>Selectors to remove, or paint over, before diffing. For carousels, chat widgets, anything you know will never match.</dd>
+      <dt>--tolerance</dt><dd>Diff percentage below which a page counts as unchanged. Pairs with the built-in absolute pixel floor.</dd>
+      <dt>--limit / --per-template</dt><dd>Volume caps. Coverage is handled by template collapse, not by these.</dd>
+      <dt>--freeze-time</dt><dd>Pins the clock so client-rendered timestamps stop diffing. <code>none</code> disables.</dd>
+    </dl>
+    <p class="muted" style="margin-top:16px; font-size:14.5px"><code>bun run compare --help</code> for the rest.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Built with Playwright and odiff.
+    <a href="https://github.com/alfredwesterveld/sidediff">github.com/alfredwesterveld/sidediff</a>
+  </div>
+</footer>
+
+</body>
+</html>
