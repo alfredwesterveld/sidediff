@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>sidediff — see what changed between two live sites</title>
 <meta name="description" content="Compare two live websites across hundreds of URLs and get one report showing exactly what changed. Playwright for capture, odiff for pixels.">
-<meta name="robots" content="noindex, nofollow">
 <style>
   :root {
     --bg:#fbfbfa; --panel:#fff; --fg:#16161a; --muted:#6b6b76; --line:#e4e4e8;
@@ -93,6 +92,13 @@
   dd { margin:0; padding:11px 18px; font-size:14px; background:var(--panel); border-bottom:1px solid var(--line); color:var(--muted); }
   dl > :nth-last-child(-n+2) { border-bottom:none; }
 
+  .offer { display:grid; grid-template-columns:1fr minmax(240px,300px); gap:2px; background:var(--line); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .offer > div { background:var(--panel); padding:26px; }
+  .offer .price { display:flex; flex-direction:column; justify-content:center; text-align:center; background:var(--accent-soft); }
+  .offer .amt { font-size:36px; font-weight:600; letter-spacing:-0.03em; }
+  .offer .buy { display:block; background:var(--accent); color:#fff; text-decoration:none; padding:12px 18px; border-radius:7px; font-size:14.5px; }
+  @media (max-width:620px) { .offer { grid-template-columns:1fr; } }
+
   footer { padding:44px 0 64px; color:var(--muted); font-size:13.5px; border-top:1px solid var(--line); }
   footer a { color:var(--fg); }
   @media (max-width:620px) { dl, .grid { grid-template-columns:1fr; } dt { border-bottom:none; padding-bottom:0; } }
@@ -131,6 +137,7 @@
     <div class="cta">
       <a class="primary" href="https://github.com/alfredwesterveld/sidediff">Repository</a>
       <a href="#start">Get started</a>
+      <a href="#audit">Get an audit</a>
     </div>
   </div>
 </header>
@@ -283,6 +290,34 @@ bun run compare <span class="f">--a</span> https://old.example <span class="f">-
       <dt>--freeze-time</dt><dd>Pins the clock so client-rendered timestamps stop diffing. <code>none</code> disables.</dd>
     </dl>
     <p class="muted" style="margin-top:16px; font-size:14.5px"><code>bun run compare --help</code> for the rest.</p>
+  </div>
+</section>
+
+<section id="audit">
+  <div class="wrap">
+    <h2>Or have it done for you</h2>
+    <div class="offer">
+      <div>
+        <h3>Migration Parity Audit</h3>
+        <p class="muted">
+          I run sidediff across your old and new site, read every finding, and send back a written
+          report: what broke, what went missing, what changed that shouldn't have, ranked by how
+          much it matters. Turnaround is a few days.
+        </p>
+        <p class="muted" style="font-size:14px">
+          The tool is free and MIT-licensed — run it yourself any time. This is for when you'd
+          rather hand the whole thing to someone else before launch day.
+        </p>
+      </div>
+      <div class="price">
+        <div class="amt">&euro;1,500</div>
+        <div class="muted" style="font-size:13.5px; margin-bottom:18px">flat, one site</div>
+        <a class="buy" href="mailto:alfredwesterveld@gmail.com?subject=Migration%20Parity%20Audit&amp;body=Old%20site%3A%0ANew%20site%3A%0ALaunch%20date%3A">Enquire</a>
+        <p class="muted" style="font-size:12.5px; margin:14px 0 0">
+          Smaller sites and single-section checks from &euro;249.
+        </p>
+      </div>
+    </div>
   </div>
 </section>
 

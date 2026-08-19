@@ -85,3 +85,7 @@ changed pixels — on a 20 000px-tall page a percentage alone would let a swappe
 ## Flags
 
 `bun run compare --help`
+
+## License
+
+MIT.

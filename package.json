@@ -2,7 +2,8 @@
   "name": "sidediff",
   "version": "0.1.0",
   "type": "module",
-  "private": true,
+  "license": "MIT",
+  "description": "Compare two live websites across many URLs and report what changed.",
   "bin": { "sidediff": "./src/cli.ts" },
   "scripts": {
     "compare": "bun run src/cli.ts",
